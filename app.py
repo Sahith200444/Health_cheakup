@@ -8,10 +8,10 @@ load_dotenv()
 app = Flask(__name__)
 
 MYSQL_SETTINGS = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "root"),
+    "host": os.getenv("DB_HOST", ""),
+    "user": os.getenv("DB_USER", ""),
     "password": os.getenv("DB_PASS", ""),
-    "database": os.getenv("DB_NAME", "health_app")
+    "database": os.getenv("DB_NAME", "")
 }
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
