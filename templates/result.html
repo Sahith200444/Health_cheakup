@@ -1,71 +1,70 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Prediction Result</title>
+  <meta charset="UTF-8">
+  <title>Your Health Report</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
-
 <body>
 
-<div class="container">
+<div class="bg-glow"></div>
 
-  <h2>Hi {{name}}, here’s your report:</h2>
+<div class="container glass">
+<a class="back-btn" href="/dashboard">🔁 GO BACK</a>
+  <h2>🧾 Hello {{name}}</h2>
+  <p class="subtitle">AI Generated Health Report</p>
 
-  <div class="card">
-    <h3>🩺 Predicted Disease</h3>
-    <p>{{disease}}</p>
+  <div class="grid">
+
+    <div class="card glow-blue">
+      <h3>🦠 Disease</h3>
+      <p>{{disease}}</p>
+    </div>
+
+    <div class="card glow-green">
+      <h3>🥗 Diet</h3>
+      <p>{{diet}}</p>
+    </div>
+
+    <div class="card glow-purple">
+      <h3>👨‍⚕️ Doctor</h3>
+      <p>{{doctor}}</p>
+    </div>
+
+    <div class="card glow-orange">
+      <h3>📊 BMI</h3>
+      <p>{{bmi}} ({{bmi_status}})</p>
+    </div>
+
   </div>
 
-  <div class="card">
-    <h3>🥗 Suggested Diet</h3>
-    <p>{{diet}}</p>
+<div class="card section-gap">
+
+    <h3>🏥 Nearby Hospitals</h3>
+    <ul>
+      {% for h in hospitals %}
+      <li>
+        {{h.name}} ⭐ {{h.rating}}
+        <a href="https://www.google.com/maps/dir/?api=1&destination={{h.lat}},{{h.lng}}" target="_blank">Navigate</a>
+      </li>
+      {% endfor %}
+    </ul>
   </div>
 
-  <div class="card">
-    <h3>👨‍⚕️ Recommended Doctor</h3>
-    <p>{{doctor}}</p>
+<div class="card section-gap">
+
+    <h3>🧪 Nearby Labs</h3>
+    <ul>
+      {% for l in labs %}
+      <li>
+        {{l.name}}
+        <a href="https://www.google.com/maps/dir/?api=1&destination={{l.lat}},{{l.lng}}" target="_blank">Navigate</a>
+      </li>
+      {% endfor %}
+    </ul>
   </div>
 
-  <div class="card">
-    <h3>📊 BMI</h3>
-    <p>{{bmi}} ({{bmi_status}})</p>
-  </div>
-
-<div class="card">
-  <h3>🏥 Nearest Hospitals</h3>
-  <ul>
-    {% for h in hospitals %}
-   <li class="place-item">
-  <span>
-    {{h.name}} ⭐ {{h.rating}} ({{h.reviews}} reviews)
-  </span>
-  <a href="https://www.google.com/maps/dir/?api=1&destination={{h.lat}},{{h.lng}}" target="_blank">
-    📍
-  </a>
-</li>
-
-
-    {% endfor %}
-  </ul>
-</div>
-
-<div class="card">
-  <h3>🧪 Nearest Labs</h3>
-  <ul>
-    {% for l in labs %}
-    <li class="place-item">
-      <span>{{l.name}}</span>
-      <a href="https://www.google.com/maps/dir/?api=1&destination={{l.lat}},{{l.lng}}" target="_blank">
-        📍
-      </a>
-    </li>
-    {% endfor %}
-  </ul>
-</div>
-
-
-
-  <a href="/">Check another</a>
+  <a class="back-btn" href="/dashboard">🔁 New Checkup</a>
 
 </div>
 
