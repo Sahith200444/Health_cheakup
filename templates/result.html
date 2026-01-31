@@ -4,8 +4,11 @@
   <title>Prediction Result</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
+
 <div class="container">
+
   <h2>Hi {{name}}, here’s your report:</h2>
 
   <div class="card">
@@ -23,7 +26,48 @@
     <p>{{doctor}}</p>
   </div>
 
-  <a href="/">Check another</a>
+  <div class="card">
+    <h3>📊 BMI</h3>
+    <p>{{bmi}} ({{bmi_status}})</p>
+  </div>
+
+<div class="card">
+  <h3>🏥 Nearest Hospitals</h3>
+  <ul>
+    {% for h in hospitals %}
+   <li class="place-item">
+  <span>
+    {{h.name}} ⭐ {{h.rating}} ({{h.reviews}} reviews)
+  </span>
+  <a href="https://www.google.com/maps/dir/?api=1&destination={{h.lat}},{{h.lng}}" target="_blank">
+    📍
+  </a>
+</li>
+
+
+    {% endfor %}
+  </ul>
 </div>
+
+<div class="card">
+  <h3>🧪 Nearest Labs</h3>
+  <ul>
+    {% for l in labs %}
+    <li class="place-item">
+      <span>{{l.name}}</span>
+      <a href="https://www.google.com/maps/dir/?api=1&destination={{l.lat}},{{l.lng}}" target="_blank">
+        📍
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+
+
+  <a href="/">Check another</a>
+
+</div>
+
 </body>
 </html>
