@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, session, url_for
 import mysql.connector
 import os
 import google.generativeai as genai
@@ -6,10 +6,12 @@ from dotenv import load_dotenv
 import requests
 import json
 import re
+import bcrypt
 
 load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = "supersecretkey123"
 
 # ---------------- MYSQL ----------------
 MYSQL_SETTINGS = {
@@ -32,15 +34,11 @@ GOOGLE_MAPS_KEY = os.getenv("GOOGLE_MAPS_KEY")
 
 # ---------------- GOOGLE MAP SEARCH ----------------
 def get_nearby(lat, lon, place_type, keyword):
-
     url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-
-    radii = [3000, 6000, 10000, 15000]   # meters
-
+    radii = [3000, 6000, 10000, 15000]
     places = []
 
     for radius in radii:
-
         params = {
             "location": f"{lat},{lon}",
             "radius": radius,
@@ -52,12 +50,10 @@ def get_nearby(lat, lon, place_type, keyword):
         response = requests.get(url, params=params).json()
 
         for p in response.get("results", []):
-
             rating = p.get("rating", 0)
             reviews = p.get("user_ratings_total", 0)
 
             if rating >= 4.0 and reviews >= 150:
-
                 entry = {
                     "name": p["name"],
                     "rating": rating,
@@ -66,7 +62,6 @@ def get_nearby(lat, lon, place_type, keyword):
                     "lng": p["geometry"]["location"]["lng"]
                 }
 
-                # Avoid duplicates
                 if entry not in places:
                     places.append(entry)
 
@@ -75,30 +70,22 @@ def get_nearby(lat, lon, place_type, keyword):
 
     return places
 
-
 # ---------------- GEMINI FUNCTION ----------------
 def ask_gemini(symptoms, age, gender, bmi):
-
     prompt = f"""
-You are a medical assistant.
-
-User Details:
-Age: {age}
-Gender: {gender}
-BMI: {bmi}
-
-Symptoms:
-{symptoms}
-
-Return ONLY JSON for disease name and doctor just return the keyword no need of a para:
+Return ONLY JSON:
 
 {{
-"disease": "",
-"diet": "",
-"doctor": ""
+"disease":"",
+"diet":"",
+"doctor":""
 }}
-"""
 
+Age:{age}
+Gender:{gender}
+BMI:{bmi}
+Symptoms:{symptoms}
+"""
     response = model.generate_content(prompt)
     text = response.text.strip()
 
@@ -108,75 +95,132 @@ Return ONLY JSON for disease name and doctor just return the keyword no need of 
 
     return json.loads(text)
 
-# ---------------- ROUTES ----------------
-@app.route("/")
-def index():
-    return render_template("index.html")
+# ================= AUTH ROUTES =================
+
+@app.route("/", methods=["GET","POST"])
+def login():
+    if request.method=="POST":
+        email=request.form["email"]
+        password=request.form["password"]
+
+        db=get_db()
+        cur=db.cursor(dictionary=True)
+        cur.execute("SELECT * FROM users WHERE email=%s",(email,))
+        user=cur.fetchone()
+
+        if user and bcrypt.checkpw(password.encode(), user["password"].encode()):
+            session["user"]=user["name"]
+            session["user_email"]=user["email"]
+
+            return redirect("/dashboard")
+
+        return render_template("login.html",error="Invalid Credentials")
+
+    return render_template("login.html")
+
+@app.route("/signup",methods=["GET","POST"])
+def signup():
+    if request.method=="POST":
+        name=request.form["name"]
+        email=request.form["email"]
+        password=bcrypt.hashpw(request.form["password"].encode(),bcrypt.gensalt()).decode()
+
+        db=get_db()
+        cur=db.cursor()
+        cur.execute("INSERT INTO users(name,email,password) VALUES(%s,%s,%s)",
+                    (name,email,password))
+        db.commit()
+
+        return redirect("/")
+
+    return render_template("signup.html")
+
+@app.route("/history")
+def history():
+
+    if "user_email" not in session:
+        return redirect("/")
+
+    db=get_db()
+    cur=db.cursor(dictionary=True)
+
+    cur.execute("""
+        SELECT name,disease,doctor,bmi,diet,created_at
+        FROM predictions
+        WHERE user_email=%s
+        ORDER BY id DESC
+    """,(session["user_email"],))
+
+    records=cur.fetchall()
+
+    return render_template("history.html",records=records)
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
+
+# ================= MAIN APP =================
+
+@app.route("/dashboard")
+def dashboard():
+    if "user" not in session:
+        return redirect("/")
+    return render_template("index.html",username=session["user"])
 
 @app.route("/predict", methods=["POST"])
 def predict():
 
-    name = request.form["name"]
-    age = request.form["age"]
-    gender = request.form["gender"]
-    height = float(request.form["height"])
-    weight = float(request.form["weight"])
-    symptoms = request.form["symptoms"]
+    if "user" not in session:
+        return redirect("/")
 
-    # LOCATION
-    lat = float(request.form["latitude"])
-    lon = float(request.form["longitude"])
+    name=request.form["name"]
+    age=request.form["age"]
+    gender=request.form["gender"]
+    height=float(request.form["height"])
+    weight=float(request.form["weight"])
+    symptoms=request.form["symptoms"]
+    lat=float(request.form["latitude"])
+    lon=float(request.form["longitude"])
 
-    # BMI
-    bmi = round(weight / ((height / 100) ** 2), 2)
+    bmi=round(weight/((height/100)**2),2)
 
-    if bmi < 18.5:
-        bmi_status = "Underweight"
-    elif bmi < 25:
-        bmi_status = "Normal"
-    elif bmi < 30:
-        bmi_status = "Overweight"
+    if bmi<18.5:
+        bmi_status="Underweight"
+    elif bmi<25:
+        bmi_status="Normal"
+    elif bmi<30:
+        bmi_status="Overweight"
     else:
-        bmi_status = "Obese"
+        bmi_status="Obese"
 
-    # GEMINI RESULT
-    result = ask_gemini(symptoms, age, gender, bmi)
+    result=ask_gemini(symptoms,age,gender,bmi)
+    doctor=result["doctor"]
 
-    doctor_type = result["doctor"]
+    hospitals=get_nearby(lat,lon,"hospital",f"{doctor} hospital")
+    labs=get_nearby(lat,lon,"diagnostic_laboratory","diagnostic lab")
 
-    # GOOGLE MAP SEARCH USING GEMINI DOCTOR
-    hospital_keyword = f"{doctor_type} hospital"
-    lab_keyword = "diagnostic laboratory"
-
-    hospitals = get_nearby(lat, lon, "hospital", hospital_keyword)
-    labs = get_nearby(lat, lon, "diagnostic_laboratory", lab_keyword)
-
-    # SAVE TO DB
-    conn = get_db()
-    cur = conn.cursor()
-
+    db=get_db()
+    cur=db.cursor()
     cur.execute("""
-        INSERT INTO predictions
-        (name, age, gender, height, weight, bmi, symptoms, disease, diet, doctor)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-    """, (
-        name, age, gender, height, weight,
-        bmi, symptoms,
-        result["disease"],
-        result["diet"],
-        doctor_type
-    ))
+INSERT INTO predictions(user_email,name,age,gender,height,weight,bmi,symptoms,disease,diet,doctor)
+VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+""",(
+    session["user_email"],
+    name,age,gender,height,weight,bmi,
+    symptoms,
+    result["disease"],
+    result["diet"],
+    doctor
+))
 
-    conn.commit()
-    cur.close()
-    conn.close()
+    db.commit()
 
-    return render_template(
-        "result.html",
+    return render_template("result.html",
         name=name,
         disease=result["disease"],
         diet=result["diet"],
-        doctor=doctor_type,
+        doctor=doctor,
         bmi=bmi,
         bmi_status=bmi_status,
         hospitals=hospitals,
@@ -184,5 +228,5 @@ def predict():
     )
 
 # ---------------- RUN ----------------
-if __name__ == "__main__":
+if __name__=="__main__":
     app.run(debug=True)
