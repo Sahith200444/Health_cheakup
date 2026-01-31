@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/style.css">
+<title>Login</title>
+</head>
+
+<body>
+<div class="container">
+
+<div class="header">
+<h1>AI Health Assistant</h1>
+<p>Login to Continue</p>
+</div>
+
+<form method="POST">
+<div class="card">
+<label>Email</label>
+<input type="email" name="email" required>
+</div>
+<div class="card ">
+<label>Password</label>
+<input type="password" name="password" required>
+</div>
+
+<button type="submit">Login</button>
+
+<p style="text-align:center;margin-top:15px">
+New User? <a href="/signup">Create Account</a>
+</p>
+
+{% if error %}
+<p style="color:red;text-align:center">{{error}}</p>
+{% endif %}
+
+</form>
+
+</div>
+</body>
+</html>
