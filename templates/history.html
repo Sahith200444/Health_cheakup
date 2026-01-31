@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/style.css">
+<title>History</title>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+<h1>Your Health History</h1>
+<p>Previous AI Consultations</p>
+</div>
+
+<div class="grid">
+
+{% for r in records %}
+
+<div class="card">
+<h3>{{r.name}}</h3>
+<p><b>Disease:</b> {{r.disease}}</p>
+<p><b>Doctor:</b> {{r.doctor}}</p>
+<p><b>BMI:</b> {{r.bmi}}</p>
+<p><b>Diet:</b> {{r.diet}}</p>
+</div>
+
+{% endfor %}
+
+</div>
+
+<a class="back-btn" href="/dashboard">⬅ Back</a>
+
+</div>
+
+</body>
+</html>
