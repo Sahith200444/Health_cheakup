@@ -4,24 +4,54 @@
   <title>AI Health Assistant</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
+
 <div class="container">
+
   <h1>Intelligent Health Assistant</h1>
 
   <form action="/predict" method="POST">
+
     <label>Name</label>
     <input type="text" name="name" required>
 
     <label>Age</label>
     <input type="number" name="age" required>
 
+    <label>Gender</label>
+    <select name="gender">
+      <option>Male</option>
+      <option>Female</option>
+    </select>
+
+    <label>Height (cm)</label>
+    <input type="number" name="height" required>
+
+    <label>Weight (kg)</label>
+    <input type="number" name="weight" required>
+
     <label>Describe your symptoms</label>
     <textarea name="symptoms" rows="5" required></textarea>
 
+    <!-- Hidden location -->
+    <input type="hidden" name="latitude" id="lat">
+    <input type="hidden" name="longitude" id="lon">
+
     <button type="submit">Get Prediction</button>
+
   </form>
+
 </div>
 
 <script src="/static/script.js"></script>
+
+<script>
+navigator.geolocation.getCurrentPosition(function(position){
+  document.getElementById("lat").value = position.coords.latitude;
+  document.getElementById("lon").value = position.coords.longitude;
+});
+</script>
+
 </body>
 </html>
