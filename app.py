@@ -145,15 +145,33 @@ def history():
     cur=db.cursor(dictionary=True)
 
     cur.execute("""
-        SELECT name,disease,doctor,bmi,diet,created_at
-        FROM predictions
-        WHERE user_email=%s
-        ORDER BY id DESC
+    SELECT id,name,disease,doctor,bmi,diet,created_at
+    FROM predictions
+    WHERE user_email=%s
+    ORDER BY created_at DESC
     """,(session["user_email"],))
+
 
     records=cur.fetchall()
 
     return render_template("history.html",records=records)
+@app.route("/delete_history/<int:pid>")
+def delete_history(pid):
+
+    if "user_email" not in session:
+        return redirect("/")
+
+    db = get_db()
+    cur = db.cursor()
+
+    cur.execute("""
+        DELETE FROM predictions
+        WHERE id=%s AND user_email=%s
+    """, (pid, session["user_email"]))
+
+    db.commit()
+    return redirect("/history")
+
 
 @app.route("/logout")
 def logout():
