@@ -1,5 +1,7 @@
-flask
+Flask
 mysql-connector-python
 python-dotenv
 google-generativeai
+requests
+bcrypt
 gunicorn
