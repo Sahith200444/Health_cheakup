@@ -14,21 +14,33 @@
 <p>Previous AI Consultations</p>
 </div>
 
-<div class="grid">
-
 {% for r in records %}
 
-<div class="card">
-<h3>{{r.name}}</h3>
-<p><b>Disease:</b> {{r.disease}}</p>
-<p><b>Doctor:</b> {{r.doctor}}</p>
-<p><b>BMI:</b> {{r.bmi}}</p>
-<p><b>Diet:</b> {{r.diet}}</p>
+<div class="card section-gap">
+
+<div style="display:flex;justify-content:space-between;align-items:center;">
+  <h3>{{ r.name }}</h3>
+  <small>{{ r.created_at.strftime("%d %b %Y - %I:%M %p") }}</small>
 </div>
 
+<p><b>Disease:</b> {{ r.disease }}</p>
+<p><b>Doctor:</b> {{ r.doctor }}</p>
+<p><b>BMI:</b> {{ r.bmi }}</p>
+<p><b>Diet:</b> {{ r.diet }}</p>
+
+<div style="text-align:right;">
+  <a href="/delete_history/{{r.id}}" 
+     onclick="return confirm('Delete this record?')"
+     style="color:red;font-weight:bold;">
+     🗑 Delete
+  </a>
+</div>
+
+</div>
+
+{% else %}
+<p style="text-align:center">No history available.</p>
 {% endfor %}
-
-</div>
 
 <a class="back-btn" href="/dashboard">⬅ Back</a>
 
